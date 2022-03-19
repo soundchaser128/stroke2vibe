@@ -4,24 +4,44 @@ use clap::Parser;
 use log::LevelFilter;
 
 #[derive(Parser, Debug)]
+#[clap(author, version, about)]
 pub struct Arguments {
+    /// Input funscript file
     #[clap(short, long)]
     pub input: PathBuf,
 
+    /// Destination to write to
     #[clap(short, long)]
     pub output: PathBuf,
 
+    /// Pretty-print the output JSON
     #[clap(short, long)]
     pub pretty: bool,
 
+    /// Enable logging (`info` or `debug`)
     #[clap(short, long)]
     pub log: Option<LevelFilter>,
 
+    /// Command list. Allowed values:
+    ///
+    /// `normalize`: Normalizes the output range to 0-100
+    ///
+    /// `scale-linear <num>`: Multiply all output values by a given factor
+    ///
+    /// `scale-sqrt`: Take the square root for all output values
+    ///
+    /// `shorten <num>`: Removes small differences in output position values
     pub commands: Vec<String>,
 }
 
 impl Arguments {
     pub fn commands(&self) -> Vec<Command> {
+        enum State {
+            None,
+            ScaleLinear,
+            Shorten,
+        }
+
         let mut commands = vec![];
         let mut state = State::None;
         for token in &self.commands {
@@ -55,10 +75,4 @@ pub enum Command {
     ScaleLinear { scale: f64 },
     ScaleSqrt,
     Shorten { diff: f64 },
-}
-
-enum State {
-    None,
-    ScaleLinear,
-    Shorten,
 }
